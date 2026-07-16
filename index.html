@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Receipt Printer Pro</title>
+  
+  <!-- Links to enable App Installation and Offline capabilities -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <style>
+    :root {
+      --bg-color: #fcfbfa;
+      --primary-color: #1a1a1a;
+      --accent-gold: #bfa15f;
+      --border-color: #e5e0d8;
+      --card-bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--primary-color);
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 30px;
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    .control-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    h2, h3 {
+      font-weight: 600;
+      border-bottom: 2px solid var(--accent-gold);
+      padding-bottom: 8px;
+    }
+    h2 { font-size: 1.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 10px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #5c554a;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      background-color: #fff;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent-gold);
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s, transform 0.1s;
+      text-align: center;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background-color: var(--accent-gold); color: white; width: 100%; }
+    .btn-secondary { background-color: #f1ede6; color: #5c554a; }
+    .btn-danger { background-color: #fce8e6; color: #cc3333; padding: 10px; }
+
+    /* Saved History Panel */
+    .history-list {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px;
+      background: #fdfdfd;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #f5f0e6;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .history-item:hover {
+      background-color: #fcf8f2;
+    }
+
+    /* Receipt Paper */
+    .receipt-preview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .receipt-paper {
+      background: #ffffff;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+      padding: 30px 20px;
+      position: relative;
+    }
+
+    .receipt-logo {
+      max-width: 80px;
+      max-height: 80px;
+      margin: 0 auto 10px auto;
+      display: none;
+      object-fit: contain;
+    }
+
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .receipt-title {
+      font-size: 1.4rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .receipt-meta {
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .divider {
+      border-top: 1px dashed #333;
+      margin: 12px 0;
+    }
+
+    .receipt-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .receipt-table th {
+      text-align: left;
+      font-weight: bold;
+      border-bottom: 1px dashed #333;
+      padding-bottom: 6px;
+    }
+
+    .receipt-table td {
+      padding: 6px 0;
+      vertical-align: top;
+    }
+
+    .text-right { text-align: right; }
+
+    .total-section {
+      font-size: 1.05rem;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .receipt-footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 25px;
+    }
+
+    /* Status indicator for offline check */
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+      align-self: flex-start;
+    }
+    .online { background-color: #e2f5e9; color: #1b8a5a; }
+    .offline { background-color: #fde8e8; color: #e13d3d; }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .control-panel, .btn, h2, h3, .form-group, #itemList, .status-badge { display: none !important; }
+      .container { display: block; }
+      .receipt-preview { width: 100%; }
+      .receipt-paper { border: none; box-shadow: none; padding: 0; width: 100%; max-width: 100%; }
+    }
+
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="control-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Receipt Control</h2>
+      <span id="networkStatus" class="status-badge online">Online</span>
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputBusiness">Business Name</label>
+        <input type="text" id="inputBusiness" value="La Boutique" oninput="updateReceipt()">
+      </div>
+      <div class="form-group">
+        <label for="currencySelect">Currency</label>
+        <select id="currencySelect" onchange="updateReceipt()">
+          <option value="$">$ (USD)</option>
+          <option value="UGX">UGX (Shillings)</option>
+          <option value="€">€ (EUR)</option>
+          <option value="£">£ (GBP)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputCustomer">Customer Name</label>
+        <input type="text" id="inputCustomer" placeholder="Jane Doe" oninput="updateReceipt()">
+      </div>
+      <div class="form-group">
+        <label for="logoUpload">Business Logo</label>
+        <input type="file" id="logoUpload" accept="image/*" onchange="handleLogo(event)">
+      </div>
+    </div>
+
+    <div>
+      <label>Receipt Items</label>
+      <div id="itemList"></div>
+      <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 8px;" onclick="addNewItemRow()">+ Add Item</button>
+    </div>
+
+    <button class="btn btn-primary" onclick="printAndSaveReceipt()">Print & Save Receipt</button>
+
+    <div>
+      <h3>Saved History (Offline Saved)</h3>
+      <div class="history-list" id="historyList">
+        <div style="color: #aaa; font-size: 0.8rem; text-align: center; padding: 10px;">No saved receipts yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="receipt-preview">
+    <div class="receipt-paper" id="receipt">
+      <center><img id="receiptLogoDisplay" class="receipt-logo" src="" alt="logo"></center>
+      
+      <div class="receipt-header">
+        <div class="receipt-title" id="receiptBusinessName">La Boutique</div>
+        <div class="receipt-meta">
+          <div>Date: <span id="receiptDate"></span></div>
+          <div>Customer: <span id="receiptCustomerName">Valued Customer</span></div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <table class="receipt-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="text-right">Qty</th>
+            <th class="text-right">Price</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody id="receiptItemsBody"></tbody>
+      </table>
+
+      <div class="divider"></div>
+
+      <table class="receipt-table total-section">
+        <tr>
+          <td>TOTAL DUE:</td>
+          <td class="text-right" id="receiptTotal">$0.00</td>
+        </tr>
+      </table>
+
+      <div class="receipt-footer">
+        <p>Thank you for your business!</p>
+        <p>Please keep this receipt for your records.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let items = [
+    { name: 'Luxury Candle', qty: 2, price: 25.00 },
+    { name: 'Room Spray', qty: 1, price: 18.50 }
+  ];
+  let currentLogoDataUrl = "";
+
+  function loadCurrentDate() {
+    const today = new Date();
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    document.getElementById('receiptDate').innerText = today.toLocaleDateString('en-US', options);
+  }
+
+  function handleLogo(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentLogoDataUrl = e.target.result;
+        const img = document.getElementById('receiptLogoDisplay');
+        img.src = currentLogoDataUrl;
+        img.style.display = 'block';
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function renderItemInputs() {
+    const container = document.getElementById('itemList');
+    container.innerHTML = '';
+    
+    items.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <input type="text" placeholder="Item Name" value="${item.name}" oninput="updateItem(${index}, 'name', this.value)">
+        <input type="number" placeholder="Qty" value="${item.qty}" min="1" oninput="updateItem(${index}, 'qty', this.value)">
+        <input type="number" placeholder="Price" value="${item.price}" step="0.01" min="0" oninput="updateItem(${index}, 'price', this.value)">
+        <button class="btn btn-danger" onclick="removeItemRow(${index})">×</button>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function updateItem(index, key, value) {
+    if (key === 'qty') items[index].qty = parseInt(value) || 0;
+    else if (key === 'price') items[index].price = parseFloat(value) || 0;
+    else items[index][key] = value;
+    updateReceipt();
+  }
+
+  function addNewItemRow() {
+    items.push({ name: '', qty: 1, price: 0.00 });
+    renderItemInputs();
+    updateReceipt();
+  }
+
+  function removeItemRow(index) {
+    items.splice(index, 1);
+    renderItemInputs();
+    updateReceipt();
+  }
+
+  function updateReceipt() {
+    const bizName = document.getElementById('inputBusiness').value || "Our Business";
+    const custName = document.getElementById('inputCustomer').value || "Valued Customer";
+    const currency = document.getElementById('currencySelect').value;
+    
+    document.getElementById('receiptBusinessName').innerText = bizName;
+    document.getElementById('receiptCustomerName').innerText = custName;
+
+    const tableBody = document.getElementById('receiptItemsBody');
+    tableBody.innerHTML = '';
+    
+    let totalSum = 0;
+    items.forEach(item => {
+      const itemRowSum = item.qty * item.price;
+      totalSum += itemRowSum;
+
+      const rowHtml = `
+        <tr>
+          <td>${item.name || 'Unnamed Item'}</td>
+          <td class="text-right">${item.qty}</td>
+          <td class="text-right">${currency}${item.price.toFixed(2)}</td>
+          <td class="text-right">${currency}${itemRowSum.toFixed(2)}</td>
+        </tr>
+      `;
+      tableBody.insertAdjacentHTML('beforeend', rowHtml);
+    });
+
+    document.getElementById('receiptTotal').innerText = `${currency}${totalSum.toFixed(2)}`;
+  }
+
+  function printAndSaveReceipt() {
+    const bizName = document.getElementById('inputBusiness').value || "Our Business";
+    const custName = document.getElementById('inputCustomer').value || "Valued Customer";
+    const total = document.getElementById('receiptTotal').innerText;
+    const date = document.getElementById('receiptDate').innerText;
+
+    const savedReceipts = JSON.parse(localStorage.getItem('receipt_history')) || [];
+    savedReceipts.unshift({ bizName, custName, total, date, items: JSON.parse(JSON.stringify(items)) });
+    
+    if(savedReceipts.length > 20) savedReceipts.pop();
+
+    localStorage.setItem('receipt_history', JSON.stringify(savedReceipts));
+    
+    renderHistory();
+    window.print();
+  }
+
+  function renderHistory() {
+    const historyList = document.getElementById('historyList');
+    const savedReceipts = JSON.parse(localStorage.getItem('receipt_history')) || [];
+    
+    if (savedReceipts.length === 0) {
+      historyList.innerHTML = '<div style="color: #aaa; font-size: 0.8rem; text-align: center; padding: 10px;">No saved receipts yet.</div>';
+      return;
+    }
+
+    historyList.innerHTML = '';
+    savedReceipts.forEach((receipt, index) => {
+      const element = document.createElement('div');
+      element.className = 'history-item';
+      element.onclick = () => loadSavedReceipt(index);
+      element.innerHTML = `
+        <div>
+          <strong>${receipt.bizName}</strong><br>
+          <span style="font-size:0.75rem; color:#888;">${receipt.date}</span>
+        </div>
+        <div style="font-weight:bold;">${receipt.total}</div>
+      `;
+      historyList.appendChild(element);
+    });
+  }
+
+  function loadSavedReceipt(index) {
+    const savedReceipts = JSON.parse(localStorage.getItem('receipt_history')) || [];
+    const receipt = savedReceipts[index];
+    if (receipt) {
+      document.getElementById('inputBusiness').value = receipt.bizName;
+      document.getElementById('inputCustomer').value = receipt.custName;
+      document.getElementById('receiptDate').innerText = receipt.date;
+      items = receipt.items;
+      renderItemInputs();
+      updateReceipt();
+    }
+  }
+
+  // Monitor network state for user feedback
+  window.addEventListener('online', () => updateNetworkStatus(true));
+  window.addEventListener('offline', () => updateNetworkStatus(false));
+
+  function updateNetworkStatus(online) {
+    const badge = document.getElementById('networkStatus');
+    if (online) {
+      badge.innerText = 'Online';
+      badge.className = 'status-badge online';
+    } else {
+      badge.innerText = 'Offline Mode';
+      badge.className = 'status-badge offline';
+    }
+  }
+
+  // Register the external service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service worker registered successfully.'))
+        .catch(err => console.log('Service worker registration failed:', err));
+    });
+  }
+
+  // Initialize
+  loadCurrentDate();
+  renderItemInputs();
+  updateReceipt();
+  renderHistory();
+  updateNetworkStatus(navigator.onLine);
+</script>
+
+</body>
+</html>

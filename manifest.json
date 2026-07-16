@@ -1,0 +1,17 @@
+{
+  "name": "Smart Receipt Printer Pro",
+  "short_name": "ReceiptPro",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fcfbfa",
+  "theme_color": "#bfa15f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
